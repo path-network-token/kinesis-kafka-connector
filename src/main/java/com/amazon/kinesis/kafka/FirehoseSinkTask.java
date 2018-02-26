@@ -181,15 +181,29 @@ public class FirehoseSinkTask extends SinkTask {
                         PutRecordRequest putRecordRequest = new PutRecordRequest();
                         putRecordRequest.setDeliveryStreamName(deliveryStreamName);
                         putRecordRequest.setRecord(DataUtility.createRecord(sinkRecord));
-                        
+
+			int retries = 10 ;
+			int waitTime = 1000 ;
+			// waitTimes: 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000, 512000
                         PutRecordResult putRecordResult;
-                        try {
+			while(retries > 0) {
+			    try {
                                 firehoseClient.putRecord(putRecordRequest);
-                        }catch(AmazonKinesisFirehoseException akfe){
-                                 System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
-                        }catch(Exception e){
-                                 System.out.println("Connector Exception" + e.getLocalizedMessage());
-                        }
-                }
+			    }catch(AmazonKinesisFirehoseException akfe){
+				System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
+				System.out.println( String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
+				// we may be getting rate limitted
+				try { 
+				    Thread.sleep(waitTime) ;
+				}catch(InterruptedException e) {
+				    Thread.currentThread().interrupt();
+				}
+				waitTime *= 2; // exponential fall off
+				retries-- ;
+			    }catch(Exception e){
+				System.out.println("Connector Exception" + e.getLocalizedMessage());
+			    }
+			}
+		}
         }
 }
