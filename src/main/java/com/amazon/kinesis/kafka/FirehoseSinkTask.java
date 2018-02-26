@@ -10,6 +10,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.RegionUtils;
@@ -28,6 +30,8 @@ import com.amazonaws.services.kinesisfirehose.model.Record;
  *
  */
 public class FirehoseSinkTask extends SinkTask {
+
+        private static final Logger log = LoggerFactory.getLogger(FirehoseSinkTask.class);
 
         private String deliveryStreamName;
 
@@ -124,8 +128,8 @@ public class FirehoseSinkTask extends SinkTask {
                         // no exception was thrown, don't retry
                         retries = 0 ;
                     }catch(AmazonKinesisFirehoseException akfe){
-                        System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
-                        System.out.println( String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
+			log.error("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
+			log.error(String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
                         // we may be getting rate limitted
                         try { 
                             Thread.sleep(waitTime) ;
@@ -136,7 +140,7 @@ public class FirehoseSinkTask extends SinkTask {
                         retries-- ;
 
                     }catch(Exception e){
-                        System.out.println("Connector Exception" + e.getLocalizedMessage());
+                        log.error("Connector Exception" + e.getLocalizedMessage());
                         // something really bad happened, don't retry
                         retries = 0 ;
                     }
@@ -190,8 +194,8 @@ public class FirehoseSinkTask extends SinkTask {
 			    try {
                                 firehoseClient.putRecord(putRecordRequest);
 			    }catch(AmazonKinesisFirehoseException akfe){
-				System.out.println("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
-				System.out.println( String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
+				log.error("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
+				log.error( String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
 				// we may be getting rate limitted
 				try { 
 				    Thread.sleep(waitTime) ;
@@ -201,7 +205,7 @@ public class FirehoseSinkTask extends SinkTask {
 				waitTime *= 2; // exponential fall off
 				retries-- ;
 			    }catch(Exception e){
-				System.out.println("Connector Exception" + e.getLocalizedMessage());
+				log.error("Connector Exception" + e.getLocalizedMessage());
 			    }
 			}
 		}
