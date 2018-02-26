@@ -7,6 +7,9 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Schema.Type;
 import org.apache.kafka.connect.data.Struct;
@@ -16,7 +19,8 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import com.amazonaws.services.kinesisfirehose.model.Record;
 
 public class DataUtility {
-
+    
+        private static final Logger log = LoggerFactory.getLogger(DataUtility.class);
 	/**
 	 * Parses Kafka Values
 	 * 
@@ -63,7 +67,7 @@ public class DataUtility {
 				return ByteBuffer.wrap(((String) value).getBytes("UTF-8"));
 			} catch (UnsupportedEncodingException e) {
 				// TODO Auto-generated catch block
-				System.out.println("Message cannot be translated:" + e.getLocalizedMessage());
+			    log.error("Message cannot be translated:" + e.getLocalizedMessage());
 			}
 		case ARRAY:
 			Schema sch = schema.valueSchema();

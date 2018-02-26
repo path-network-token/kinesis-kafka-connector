@@ -3,6 +3,8 @@ package com.amazon.kinesis.kafka;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -23,8 +25,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 public class AmazonKinesisSinkTask extends SinkTask {
+    private static final Logger log = LoggerFactory.getLogger(AmazonKinesisSinkTask.class);
 
-	private String streamName;
+    private String streamName;
 
 	private String regionName;
 
@@ -162,8 +165,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 								// notify/log that Kinesis Producers have
 								// buffered values
 								// but are not being sent
-								System.out.println(
-										"Kafka Consumption has been stopped because Kinesis Producers has buffered messages above threshold");
+							        log.error( "Kafka Consumption has been stopped because Kinesis Producers has buffered messages above threshold");
 								sleepCount = 0;
 							}
 						} catch (InterruptedException e) {
@@ -192,8 +194,7 @@ public class AmazonKinesisSinkTask extends SinkTask {
 							// notify/log that Kinesis Producers have buffered
 							// values
 							// but are not being sent
-							System.out.println(
-									"Kafka Consumption has been stopped because Kinesis Producers has buffered messages above threshold");
+							log.error("Kafka Consumption has been stopped because Kinesis Producers has buffered messages above threshold");
 							sleepCount = 0;
 						}
 					} catch (InterruptedException e) {
