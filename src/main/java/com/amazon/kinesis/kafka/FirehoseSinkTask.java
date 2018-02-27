@@ -121,29 +121,38 @@ public class FirehoseSinkTask extends SinkTask {
                 // waitTimes: 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000, 512000
                 // Put Record Batch records. Max No.Of Records we can put in a
                 // single put record batch request is 500 and total size < 4MB
-                PutRecordBatchResult putRecordBatchResult = null; 
+                PutRecordBatchResult putRecordBatchResult = null;
                 while (retries > 0) {
                     try {
                         putRecordBatchResult = firehoseClient.putRecordBatch(putRecordBatchRequest);
-                        // no exception was thrown, don't retry
-                        retries = 0 ;
+			int failures =  putRecordBatchResult.getFailedPutCount() ;
+			if (failures > 0) {
+			    log.error("Amazon Kinesis Firehose Fail:" + putRecordBatchResult.toString() );
+			}
+			else {
+			    retries = 0;
+			}
                     }catch(AmazonKinesisFirehoseException akfe){
 			log.error("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
 			log.error(String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
-                        // we may be getting rate limitted
-                        try { 
-                            Thread.sleep(waitTime) ;
-                        }catch(InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                        waitTime *= 2; // exponential fall off
-                        retries-- ;
 
                     }catch(Exception e){
                         log.error("Connector Exception" + e.getLocalizedMessage());
                         // something really bad happened, don't retry
                         retries = 0 ;
                     }
+		    if ( retries > 0 ) {
+			try { 
+                            Thread.sleep(waitTime) ;
+                        }catch(InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
+                        waitTime *= 2; // exponential fall off
+                        retries-- ;
+		    }
+		    else {
+			retries = 0;
+		    }
                 }
                 return putRecordBatchResult; 
         }
