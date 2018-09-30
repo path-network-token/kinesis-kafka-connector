@@ -144,7 +144,7 @@ public class FirehoseSinkTask extends SinkTask {
         int recordsSizeInBytes = 0;
 
         for (SinkRecord sinkRecord : sinkRecords) {
-            Record record = DataUtility.createRecord(sinkRecord);
+            Record record = DataUtility.createFirehoseRecord(sinkRecord);
             recordList.add(record);
             recordsInBatch++;
             recordsSizeInBytes += record.getData().capacity();
@@ -168,7 +168,7 @@ public class FirehoseSinkTask extends SinkTask {
 
             PutRecordRequest putRecordRequest = new PutRecordRequest();
             putRecordRequest.setDeliveryStreamName(deliveryStreamName);
-            putRecordRequest.setRecord(DataUtility.createRecord(sinkRecord));
+            putRecordRequest.setRecord(DataUtility.createFirehoseRecord(sinkRecord));
 
             int retries = 10;
             int waitTime = 1000;

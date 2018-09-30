@@ -24,7 +24,7 @@ public class DataUtility {
      * Parses Kafka Values
      *
      * @param schema - Schema of passed message as per
-     *               https://kafka.apache.org/0100/javadoc/org/apache/kafka/connect/data/Schema.html
+     *                 https://kafka.apache.org/0100/javadoc/org/apache/kafka/connect/data/Schema.html
      * @param value  - Value of the message
      * @return Parsed bytebuffer as per schema type
      */
@@ -106,14 +106,62 @@ public class DataUtility {
         return null;
     }
 
+    // TODO MKN: fix, use, test
+    public static ByteBuffer parseJobResultValue(Schema schema, Object value) {
+        // TODO minor MKN: make it generic (not specific to the "JobResult" format)...
+        Schema.Type schemaType = schema.type();
+        switch (schemaType) {
+            case STRUCT:
+
+                // TODO MKN: received_on,customer_uuid,job_uuid,result_uuid,miner_id,asn,ip_range,geo_lat,geo_long,derived_lat,derived_long,derived_accuracy,status,response_time,response_body,kafka_topic,kafka_offset,kafka_partition
+                /*
+                    received_on
+                    result_uuid
+                    execution_id
+                    job_uuid
+                    customer_uuid
+                    miner_id
+                    wallet_id
+                    asn
+                    ip_range
+                    ip
+                    geo_lat
+                    geo_long
+                    derived_lat
+                    derived_long
+                    derived_accuracy
+                    status
+                    response_time
+                    response_body
+                    kafka_topic
+                    kafka_offset
+                    kafka_partition
+                 */
+
+                List<ByteBuffer> fieldList = new LinkedList<ByteBuffer>();
+
+                // Parsing each field of structure
+                schema.fields().forEach(field -> fieldList.add(parseValue(field.schema(), ((Struct) value).get(field))));
+                // Initialize ByteBuffer
+                ByteBuffer processedValue = ByteBuffer.allocate(fieldList.stream().mapToInt(Buffer::remaining).sum());
+                // Combine bytebuffer of all fields
+                fieldList.forEach(buffer -> processedValue.put(buffer.duplicate()));
+
+                return processedValue;
+
+        }
+        // TODO MKN: log error
+        throw new IllegalArgumentException(String.format("Unexpected schema type: %s", schemaType));
+    }
+
     /**
      * Converts Kafka record into Kinesis record
      *
      * @param sinkRecord Kafka unit of message
      * @return Kinesis unit of message
      */
-    public static Record createRecord(SinkRecord sinkRecord) {
-        return new Record().withData(parseValue(sinkRecord.valueSchema(), sinkRecord.value()));
+    public static Record createFirehoseRecord(SinkRecord sinkRecord) {
+        return new Record().withData(parseJobResultValue(sinkRecord.valueSchema(), sinkRecord.value()));
     }
 
 }
