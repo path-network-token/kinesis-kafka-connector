@@ -26,6 +26,7 @@
                   <exclude>com.fasterxml.jackson.dataformat:*</exclude>
                   <exclude>com.fasterxml.jackson.dataformat:*</exclude>
                   <exclude>jackson*:jackson-databind:jar:</exclude>
+                  <exclude>com.google.guava:*</exclude>
                 </excludes>
               </artifactSet>
             </configuration>
@@ -49,7 +50,7 @@
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>connect-api</artifactId>
-      <version>0.11.0.2</version>
+      <version>1.0.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
