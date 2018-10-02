@@ -46,10 +46,11 @@ public class FirehoseSinkTask extends SinkTask {
 
     @Override
     public void put(Collection<SinkRecord> sinkRecords) {
-        if (batch)
+        if (batch) {
             putRecordsInBatch(sinkRecords);
-        else
+        } else {
             putRecords(sinkRecords);
+        }
     }
 
     @Override
@@ -77,11 +78,13 @@ public class FirehoseSinkTask extends SinkTask {
      * Validates status of given Amazon Kinesis Firehose Delivery Stream.
      */
     private void validateDeliveryStream() {
-        DescribeDeliveryStreamRequest describeDeliveryStreamRequest = new DescribeDeliveryStreamRequest();
+        final DescribeDeliveryStreamRequest describeDeliveryStreamRequest = new DescribeDeliveryStreamRequest();
         describeDeliveryStreamRequest.setDeliveryStreamName(deliveryStreamName);
-        DescribeDeliveryStreamResult describeDeliveryStreamResult = firehoseClient
+        final DescribeDeliveryStreamResult describeDeliveryStreamResult = firehoseClient
                 .describeDeliveryStream(describeDeliveryStreamRequest);
-        if (!describeDeliveryStreamResult.getDeliveryStreamDescription().getDeliveryStreamStatus().equals("ACTIVE")) {
+        if (describeDeliveryStreamResult.getDeliveryStreamDescription().getDeliveryStreamStatus().equals("ACTIVE")) {
+            log.info(String.format("Firehose Connector is starting with '%s' delivery stream.", deliveryStreamName));
+        } else {
             log.error("Connector can't start to do inactive delivery stream.");
             throw new ConfigException("Connecter cannot start as configured delivery stream is not active"
                     + describeDeliveryStreamResult.getDeliveryStreamDescription().getDeliveryStreamStatus());
@@ -95,14 +98,20 @@ public class FirehoseSinkTask extends SinkTask {
      * @return the output of PutRecordBatch
      */
     private PutRecordBatchResult putRecordBatch(List<Record> recordList) {
+
+        // TODO MKN: change it to debug level
+        log.info(String.format("Preparing PutRecordBatchRequest for %d records.", recordList.size()));
+
         PutRecordBatchRequest putRecordBatchRequest = new PutRecordBatchRequest();
         putRecordBatchRequest.setDeliveryStreamName(deliveryStreamName);
         putRecordBatchRequest.setRecords(recordList);
 
+        // TODO MKN: revise and test the "retry logic" below, numbers used
+
         int retries = 10;
         int waitTime = 1000;
         // waitTimes: 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000, 512000
-        // Put Record Batch records. Max No.Of Records we can put in a
+        // Put Record Batch records. Max No. of Records we can put in a
         // single put record batch request is 500 and total size < 4MB
         PutRecordBatchResult putRecordBatchResult = null;
         while (retries > 0) {
@@ -110,14 +119,24 @@ public class FirehoseSinkTask extends SinkTask {
                 putRecordBatchResult = firehoseClient.putRecordBatch(putRecordBatchRequest);
                 int failures = putRecordBatchResult.getFailedPutCount();
                 if (failures > 0) {
+                    // TODO MKN: the putRecordBatchRequest should be corrected in this case:
+                    /*
+                        // extract the failed records
+                        var failedBatch = [];
+                        data.RequestResponses.map(function(item, index) {
+                            if (item.hasOwnProperty('ErrorCode')) {
+                              failedBatch.push(firehoseBatch[index]);
+                            }
+                        });
+                     */
                     log.error("Amazon Kinesis Firehose Fail:" + putRecordBatchResult.toString());
+                    log.error(String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
                 } else {
                     retries = 0;
                 }
             } catch (AmazonKinesisFirehoseException akfe) {
                 log.error("Amazon Kinesis Firehose Exception:" + akfe.getLocalizedMessage());
                 log.error(String.format("Waiting: %d ms and retrying.  Retries remaining %d. ", waitTime, retries));
-
             } catch (Exception e) {
                 log.error("Connector Exception" + e.getLocalizedMessage());
                 // something really bad happened, don't retry
@@ -135,10 +154,15 @@ public class FirehoseSinkTask extends SinkTask {
                 retries = 0;
             }
         }
+
         return putRecordBatchResult;
     }
 
     private void putRecordsInBatch(Collection<SinkRecord> sinkRecords) {
+
+        // TODO MKN: change it to debug level
+        log.info(String.format("SinkRecords collection size: %d", sinkRecords.size()));
+
         List<Record> recordList = new ArrayList<Record>();
         int recordsInBatch = 0;
         int recordsSizeInBytes = 0;
@@ -150,6 +174,11 @@ public class FirehoseSinkTask extends SinkTask {
             recordsSizeInBytes += record.getData().capacity();
 
             if (recordsInBatch == batchSize || recordsSizeInBytes > batchSizeInBytes) {
+
+                // TODO MKN: change it to debug level
+                log.info(String.format("We've reached either batchSize or batchSizeInBytes limits, so flushing to Firehouse: batchSize = %d, batchSizeInBytes = %d",
+                        batchSize, batchSizeInBytes));
+
                 putRecordBatch(recordList);
                 recordList.clear();
                 recordsInBatch = 0;

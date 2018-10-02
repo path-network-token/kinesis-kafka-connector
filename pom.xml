@@ -75,7 +75,7 @@
 									<exclude>com.fasterxml.jackson.dataformat:*</exclude>
 									<exclude>com.fasterxml.jackson.dataformat:*</exclude>
 									<exclude>jackson*:jackson-databind:jar:</exclude>
-                  <exclude>com.google.guava:*</exclude>
+                                    <exclude>com.google.guava:*</exclude>
 								</excludes>
 							</artifactSet>
 						</configuration>

@@ -38,7 +38,6 @@ public class FirehoseSinkConnector extends SinkConnector {
 
     @Override
     public void start(Map<String, String> props) {
-
         deliveryStream = props.get(DELIVERY_STREAM);
         region = props.get(REGION);
         batch = props.get(BATCH);
@@ -49,7 +48,6 @@ public class FirehoseSinkConnector extends SinkConnector {
     @Override
     public void stop() {
         // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -62,24 +60,29 @@ public class FirehoseSinkConnector extends SinkConnector {
         ArrayList<Map<String, String>> configs = new ArrayList<>();
         for (int i = 0; i < maxTasks; i++) {
             Map<String, String> config = new HashMap<>();
-            if (deliveryStream != null)
+            if (deliveryStream != null) {
                 config.put(DELIVERY_STREAM, deliveryStream);
+            }
 
-            if (region != null)
+            if (region != null) {
                 config.put(REGION, region);
+            }
 
-            if (batch != null)
+            if (batch != null) {
                 config.put(BATCH, batch);
+            }
 
-            if (batchSize != null)
-                config.put(BATCH_SIZE, batchSize);
-            else
+            if (batchSize == null) {
                 config.put(BATCH_SIZE, MAX_BATCH_SIZE);
+            } else {
+                config.put(BATCH_SIZE, batchSize);
+            }
 
-            if (batchSizeInBytes != null)
-                config.put(BATCH_SIZE_IN_BYTES, batchSizeInBytes);
-            else
+            if (batchSizeInBytes == null) {
                 config.put(BATCH_SIZE_IN_BYTES, MAX_BATCH_SIZE_IN_BYTES);
+            } else {
+                config.put(BATCH_SIZE_IN_BYTES, batchSizeInBytes);
+            }
 
             configs.add(config);
         }

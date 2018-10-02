@@ -61,7 +61,7 @@ public class DataUtility {
                                                  String kafka_topic, Integer kafka_partition, long kafka_offset) {
         // TODO minor MKN: make it generic (not specific to the "JobResult" format)...
         if (schema.type() == Type.STRUCT && schema.name().startsWith(PathConstants.JOBS_RESULT_V_X_SCHEMA_NAME_START)) {
-            // Note: received_on,customer_uuid,job_uuid,result_uuid,miner_id,asn,ip_range,geo_lat,geo_long,derived_lat,derived_long,derived_accuracy,status,response_time,response_body,kafka_topic,kafka_offset,kafka_partition
+            // Note: received_on,result_uuid,execution_id,job_uuid,customer_uuid,miner_id,wallet_id,asn,ip_range,ip,geo_lat,geo_long,derived_lat,derived_long,derived_accuracy,status,response_time,response_body,kafka_topic,kafka_offset,kafka_partition
             /*
                 received_on
                 result_uuid
